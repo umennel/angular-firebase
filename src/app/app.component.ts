@@ -1,5 +1,5 @@
-import { Component } from '@angular/core';
 import { AngularFireMessaging } from '@angular/fire/messaging';
+import { Component } from '@angular/core';
 
 @Component({
   selector: 'app-root',
@@ -10,7 +10,7 @@ import { AngularFireMessaging } from '@angular/fire/messaging';
   `
 })
 export class AppComponent {
-  constructor(private afMessaging: AngularFireMessaging) { }
+  constructor(private afMessaging: AngularFireMessaging) {}
 
   requestPermission() {
     this.afMessaging.requestToken
@@ -24,7 +24,7 @@ export class AppComponent {
   }
 
   listen() {
-    this.afMessaging.messages
-      .subscribe((message) => { console.log(message); });
+    // TODO: This is a workaround for https://github.com/angular/angularfire/issues/2299
+    this.afMessaging.onMessage((message) => { console.log(message); });
   }
 }
