@@ -1,30 +1,38 @@
-import { AngularFireMessaging } from '@angular/fire/messaging';
 import { Component } from '@angular/core';
+import * as firebase from 'firebase/app';
+import 'firebase/messaging';
+import { environment } from 'src/environments/environment';
+import { SwUpdate, SwPush } from '@angular/service-worker';
 
 @Component({
   selector: 'app-root',
-  template: `
-  <button (click)="requestPermission()">
-    Hello this is a chat app. You should let us send you notifications for this reason.
-  </button>
-  `
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
-  constructor(private afMessaging: AngularFireMessaging) {}
+  title = 'angular-firebase';
 
-  requestPermission() {
-    this.afMessaging.requestToken
-      .subscribe(
-        (token) => {
-          console.log('Permission granted! Save to the server!', token);
-          this.listen();
-        },
-        (error) => { console.error(error); },
-      );
+  displayToken: string;
+  constructor(updates: SwUpdate, push: SwPush) {
+    updates.available.subscribe(_ => updates.activateUpdate().then(() => {
+      console.log('reload for update');
+      document.location.reload();
+    }));
+    push.messages.subscribe(msg => console.log('push message', msg));
+    push.notificationClicks.subscribe(click => console.log('notification click', click));
+    if (!firebase.apps.length) {
+      firebase.initializeApp(environment.firebase);
+    }
   }
 
-  listen() {
-    // TODO: This is a workaround for https://github.com/angular/angularfire/issues/2299
-    this.afMessaging.onMessage((message) => { console.log(message); });
+  permitToNotify() {
+    const messaging = firebase.messaging();
+    navigator.serviceWorker.getRegistration().then(serviceWorkerRegistration => {
+    Notification.requestPermission()
+      .then(() => messaging.getToken({ serviceWorkerRegistration }).then(token => this.displayToken = token))
+      .catch(err => {
+        console.log('Unable to get permission to notify.', err);
+      });
+    });
   }
 }
